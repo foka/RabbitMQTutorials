@@ -10,11 +10,13 @@ class Worker
         using (var connection = factory.CreateConnection())
         using (var channel = connection.CreateModel())
         {
-            channel.QueueDeclare(queue: "hello",
-                                 durable: false,
+            channel.QueueDeclare(queue: "task_queue",
+                                 durable: true,
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: null);
+            channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
+            Console.WriteLine(" [*] Waiting for messages.");   
 
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (model, ea) =>
@@ -27,9 +29,13 @@ class Worker
                 Thread.Sleep(dots * 1000);
 
                 Console.WriteLine(" [x] Done");
+                
+                // Note: it is possible to access the channel via
+                //       ((EventingBasicConsumer)sender).Model here
+                channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);                
             };
             channel.BasicConsume(queue: "hello",
-                                 autoAck: true,
+                                 autoAck: false,
                                  consumer: consumer);
 
             Console.WriteLine(" Press [enter] to exit.");

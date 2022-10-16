@@ -23,12 +23,10 @@ class Receive
                 var message = Encoding.UTF8.GetString(body);
                 Console.WriteLine(" [x] Received {0}", message);
             };
-            channel.BasicConsume(queue: "hello",
+            var x = channel.BasicConsume(queue: "hello",
                                  autoAck: true,
                                  consumer: consumer);
-
-            Console.WriteLine(" Press [enter] to exit.");
-            Console.ReadLine();
+            Console.WriteLine($"dupa {x}");
         }
     }
 }

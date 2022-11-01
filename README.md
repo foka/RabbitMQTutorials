@@ -16,6 +16,7 @@
 * `autoAck` in `channel.BasicConsume`
 
 ---
+
 ## [Work Queues](https://www.rabbitmq.com/tutorials/tutorial-two-dotnet.html)
 * [Code](./WorkQueues)
 
@@ -32,3 +33,19 @@
 ### To learn
 * [Publisher Confirms](https://www.rabbitmq.com/confirms.html)
 * For more information on IModel methods and IBasicProperties, you can browse the [RabbitMQ .NET client API reference online](https://rabbitmq.github.io/rabbitmq-dotnet-client/api/RabbitMQ.Client.html).
+
+---
+
+## [Publish/Subscribe](https://www.rabbitmq.com/tutorials/tutorial-three-dotnet.html)
+* [Code](./PublishSubscribe)
+
+### TIL
+* `Exchange`
+* Exchange types (fanout)
+* Exchane-quque routing key
+
+### To learn
+* Exchange types: direct, topic, headers and fanout
+* ⌛ [Publisher Confirms](https://www.rabbitmq.com/confirms.html)
+* ⌛ For more information on IModel methods and IBasicProperties, you can browse the [RabbitMQ .NET client API reference online](https://rabbitmq.github.io/rabbitmq-dotnet-client/api/RabbitMQ.Client.html).
+

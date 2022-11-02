@@ -59,10 +59,26 @@
 * Binding (of queue and exchange)
 * `fanout` exchange ignores `binding key`
 * `direct` exchange type: a message goes to the queues whose binding key exactly matches the routing key of the message
-* 
 
 ### To learn
 * ⌛ Exchange types: topic, headers
+* ⌛ [Publisher Confirms](https://www.rabbitmq.com/confirms.html)
+* ⌛ For more information on IModel methods and IBasicProperties, you can browse the [RabbitMQ .NET client API reference online](https://rabbitmq.github.io/rabbitmq-dotnet-client/api/RabbitMQ.Client.html).
+
+
+---
+
+## [Topics](https://www.rabbitmq.com/tutorials/tutorial-five-dotnet.html)
+* [Code](./Topics)
+
+### TIL
+* `topic` exchange type
+* `*` (star) can substitute for exactly one word.
+* `#` (hash) can substitute for zero or more words.
+* There can be as many words in the routing key as you like, up to the limit of 255 bytes.
+
+### To learn
+* ⌛ Exchange types: headers
 * ⌛ [Publisher Confirms](https://www.rabbitmq.com/confirms.html)
 * ⌛ For more information on IModel methods and IBasicProperties, you can browse the [RabbitMQ .NET client API reference online](https://rabbitmq.github.io/rabbitmq-dotnet-client/api/RabbitMQ.Client.html).
 

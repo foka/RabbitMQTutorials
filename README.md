@@ -21,7 +21,7 @@
 * [Code](./WorkQueues)
 
 ### TIL
-* "Work queue" as a pattern.
+* Work queue as a [Competing Consumers pattern](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CompetingConsumers.html).
 * Message ack(nowledgement) - consumer tells RabbitMQ that a particular message has been received, processed and that RabbitMQ is free to delete it.
   * Default timeout on ack delivery = 30 minutes.
   * `autoAck` in `channel.BasicConsume`
@@ -65,7 +65,6 @@
 * ⌛ [Publisher Confirms](https://www.rabbitmq.com/confirms.html)
 * ⌛ For more information on IModel methods and IBasicProperties, you can browse the [RabbitMQ .NET client API reference online](https://rabbitmq.github.io/rabbitmq-dotnet-client/api/RabbitMQ.Client.html).
 
-
 ---
 
 ## [Topics](https://www.rabbitmq.com/tutorials/tutorial-five-dotnet.html)
@@ -82,3 +81,15 @@
 * ⌛ [Publisher Confirms](https://www.rabbitmq.com/confirms.html)
 * ⌛ For more information on IModel methods and IBasicProperties, you can browse the [RabbitMQ .NET client API reference online](https://rabbitmq.github.io/rabbitmq-dotnet-client/api/RabbitMQ.Client.html).
 
+---
+
+## [RPC](https://www.rabbitmq.com/tutorials/tutorial-six-dotnet.html)
+* [Code](./Rpc)
+
+### TIL
+* `BlockingCollection<T>`
+
+### To learn
+* ⌛ Exchange types: headers
+* ⌛ [Publisher Confirms](https://www.rabbitmq.com/confirms.html)
+* ⌛ For more information on IModel methods and IBasicProperties, you can browse the [RabbitMQ .NET client API reference online](https://rabbitmq.github.io/rabbitmq-dotnet-client/api/RabbitMQ.Client.html).

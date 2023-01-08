@@ -21,6 +21,7 @@
     "peacock.color": "#FF6600",
     "cSpell.words": [
         "Acks",
+        "fanout",
         "Nacks"
     ]
 }

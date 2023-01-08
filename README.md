@@ -37,6 +37,11 @@ Read [my notes from tutorials](TutorialsNotes.md).
 
   Yes.
 
+* **Ok, but do I always need to have a dedicated exchange, configure it and bind my queues with it?**
+
+  No. For the simplest scenarios you can skip the exchange declaration eg. `channel.BasicPublish(exchange: "", routingKey: "myQueue", body: body)`. Here, the message will be delivered to a queue with name `myQueue`. Looks like there's no exchange used, but actually you have just used the [default exchange](https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchange-default).
+
+
 * **What are publisher confirms?**
 
   If you publish a message you're not 100% sure that the broker actually received the message. Mind, that we're not talking about consumer, just the broker. So if you want to be sure, that Rabbit handled the message, you need to use a confirmation mechanism. This confirmation is called an acknowledgement or ack, and nack for negative acknowledgement.

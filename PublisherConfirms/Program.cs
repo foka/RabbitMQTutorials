@@ -1,89 +1,124 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Running;
 using RabbitMQ.Client;
 
-var factory = new ConnectionFactory() { HostName = "localhost" };
-using var connection = factory.CreateConnection();
-using var channel = connection.CreateModel();
-
-channel.ExchangeDeclare(exchange: "publisher_confirms_tutorial", type: ExchangeType.Topic);
-channel.ConfirmSelect();
-
-var messageCount = 1000;
-var messageBody = Encoding.UTF8.GetBytes("Lorem ipsum dolor sit amet enim.");
-var basicProperties = channel.CreateBasicProperties();
-
-PublishMessagesIndividually();
-PublishMessagesInBatches(batchSize: 200);
-await HandlePublisherConfirmsAsynchronously();
-
-
-void PublishMessagesIndividually()
+public class Program
 {
-    for (int i = 0; i < messageCount; i++)
+    private static readonly long messageCount = 50000;
+    private static readonly byte[] messageBody = Encoding.UTF8.GetBytes("Lorem ipsum dolor sit amet enim.");
+
+    public static void Main(string[] args)
     {
-        channel.BasicPublish(exchange: "publisher_confirms_tutorial", routingKey: "", basicProperties, messageBody);
-        channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(5));
+        var summary = BenchmarkRunner.Run<Program>(
+            DefaultConfig.Instance.AddJob(
+                Job.Default.WithWarmupCount(1)
+                    .WithIterationCount(1)
+                    .WithUnrollFactor(1)
+            )
+        );
+        Console.WriteLine(summary.ToString());
     }
-}
 
-void PublishMessagesInBatches(int batchSize)
-{
-    int i = 0;
-    while (i < messageCount)
+    [Benchmark]
+    public void PublishMessagesIndividually()
     {
-        channel.BasicPublish(exchange: "publisher_confirms_tutorial", routingKey: "", basicProperties, messageBody);
+        using var connection = CreateConnection();
+        using var channel = CreateChannel(connection);
+        var basicProperties = channel.CreateBasicProperties();
 
-        i++;
-        if (i % batchSize == 0)
+        for (int i = 0; i < messageCount; i++)
+        {
+            channel.BasicPublish(exchange: "publisher_confirms_tutorial", routingKey: "", basicProperties, messageBody);
+            channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(5));
+        }
+    }
+
+    [Benchmark]
+    public void PublishMessagesInBatches100()
+    {
+        int batchSize = 100;
+        using var connection = CreateConnection();
+        using var channel = CreateChannel(connection);
+        var basicProperties = channel.CreateBasicProperties();
+
+        int i = 0;
+        while (i < messageCount)
+        {
+            channel.BasicPublish(exchange: "publisher_confirms_tutorial", routingKey: "", basicProperties, messageBody);
+
+            i++;
+            if (i % batchSize == 0)
+            {
+                channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(5));
+            }
+        }
+
+        var hasUnconfirmedMessages = i % batchSize != 0;
+        if (hasUnconfirmedMessages)
         {
             channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(5));
         }
     }
 
-    var hasUnconfirmedMessages = i % batchSize != 0;
-    if (hasUnconfirmedMessages)
+    [Benchmark]
+    public void HandlePublisherConfirmsAsynchronously()
     {
-        channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(5));
-    }
-}
+        using var connection = CreateConnection();
+        using var channel = CreateChannel(connection);
+        var basicProperties = channel.CreateBasicProperties();
 
-async Task HandlePublisherConfirmsAsynchronously()
-{
-    var outstandingConfirms = new ConcurrentDictionary<ulong, string>();
+        var outstandingConfirms = new ConcurrentDictionary<ulong, string>();
 
-    channel.BasicAcks += (sender, ea) => cleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
-    channel.BasicNacks += (sender, ea) =>
-    {
-        outstandingConfirms.TryGetValue(ea.DeliveryTag, out string body);
-        Console.WriteLine($"Message with body {body} has been nack-ed. Sequence number: {ea.DeliveryTag}, multiple: {ea.Multiple}");
-        cleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
-    };
-
-    for (int i = 0; i < messageCount; i++)
-    {
-        channel.BasicPublish(exchange: "publisher_confirms_tutorial", routingKey: "", basicProperties, messageBody);
-    }
-
-    await Task.Run(() =>
-    {
-        while (outstandingConfirms.Count != 0)
-            Task.Delay(100);
-    });
-
-    void cleanOutstandingConfirms(ulong sequenceNumber, bool multiple)
-    {
-        if (multiple)
+        channel.BasicAcks += (sender, ea) => cleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
+        channel.BasicNacks += (sender, ea) =>
         {
-            var confirmed = outstandingConfirms.Where(k => k.Key <= sequenceNumber);
-            foreach (var entry in confirmed)
+            outstandingConfirms.TryGetValue(ea.DeliveryTag, out string body);
+            Console.WriteLine($"Message with body {body} has been nack-ed. Sequence number: {ea.DeliveryTag}, multiple: {ea.Multiple}");
+            cleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
+        };
+
+        for (int i = 0; i < messageCount; i++)
+        {
+            channel.BasicPublish(exchange: "publisher_confirms_tutorial", routingKey: "", basicProperties, messageBody);
+        }
+
+        while (outstandingConfirms.Count != 0)
+            Thread.Sleep(1);
+
+        void cleanOutstandingConfirms(ulong sequenceNumber, bool multiple)
+        {
+            if (multiple)
             {
-                outstandingConfirms.TryRemove(entry.Key, out _);
+                var confirmed = outstandingConfirms.Where(k => k.Key <= sequenceNumber);
+                foreach (var entry in confirmed)
+                {
+                    outstandingConfirms.TryRemove(entry.Key, out _);
+                }
+            }
+            else
+            {
+                outstandingConfirms.TryRemove(sequenceNumber, out _);
             }
         }
-        else
-        {
-            outstandingConfirms.TryRemove(sequenceNumber, out _);
-        }
+    }
+
+
+    private static IConnection CreateConnection()
+    {
+        var factory = new ConnectionFactory() { HostName = "localhost" };
+        var connection = factory.CreateConnection();
+        return connection;
+    }
+
+    private static IModel CreateChannel(IConnection connection)
+    {
+        var channel = connection.CreateModel();
+        channel.ExchangeDeclare(exchange: "publisher_confirms_tutorial", type: ExchangeType.Topic);
+        channel.ConfirmSelect();
+        return channel;
     }
 }

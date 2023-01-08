@@ -15,7 +15,7 @@ class Receive
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: null);
-                                 
+
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (model, ea) =>
             {
@@ -26,6 +26,9 @@ class Receive
             var x = channel.BasicConsume(queue: "hello",
                                  autoAck: true,
                                  consumer: consumer);
+
+            Console.WriteLine(" Press [enter] to exit.");
+            Console.ReadLine();
         }
     }
 }
